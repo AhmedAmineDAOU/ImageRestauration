@@ -29,7 +29,7 @@ int main(int argc,char** argv)
  {
   int i,j,k,l;
   int length,width;
-  int M=3; /* trois niveaux de decomposition */
+  int M=4; /* trois niveaux de decomposition */
   
   float** image;
   float** haar;
@@ -52,10 +52,19 @@ int main(int argc,char** argv)
   haar2D_complete(image,haar,M,length,width);
 
   Recal_haar(haar,M,tmp1,length,width);
+  for (int i = 0; i < length; i++)
+  {
+    for (int j = 0; j<width; j++)
+    {
+      printf("%i%s", (int)tmp1[i][j]," ");
+    }
+    printf("\n");
+  }
   SaveImagePgm(NAME_IMG_OUT1,tmp1,length,width);
 
 	/* Transformee inverse de Haar */
   ihaar2D_complete(haar,haar_inverse,M,length,width);
+  
   SaveImagePgm(NAME_IMG_OUT2,haar_inverse,length,width);
 
   /*Liberation memoire pour les matrices*/
