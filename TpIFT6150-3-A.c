@@ -174,7 +174,7 @@ int main(int argc,char** argv)
   int nb_iterations;
   int length,width;
   int pas=1;
-  float var, isnr;
+  float var;
   int size_filter; /* taille du filtre servant a ajouter du flou a l'image d'entree */
 
    
@@ -225,7 +225,7 @@ int main(int argc,char** argv)
   /*sauvegarder image contenant du flou + bruit*/
   SaveImagePgm(NAME_IMG_OUT4,gR,length,width);
 
-  printf("\nEntrez le nombre d'itérations pour LANDWEBER: meilleur valeur 27 :");
+  printf("\nEntrez le nombre d'itérations pour LANDWEBER: ");
   scanf("%d",&nb_iterations);
 
   /*restaurer l'image apres flou+bruit*/

@@ -29,7 +29,7 @@ int main(int argc,char** argv)
  {
   int i,j,k,l;
   int length,width;
-  int M=4; /* trois niveaux de decomposition */
+  int M=3; /* trois niveaux de decomposition */
   
   float** image;
   float** haar;

@@ -26,6 +26,7 @@
 #define NAME_IMG_OUT2 "photograph_degraded_C" 
 #define NAME_IMG_OUT3 "photograph_restaured_C"   
 
+
 /*applique un flou (filtre pass-bas (ilterR, filterI) de taille 
 size_filter sur l'image (imageR,  imageI) et enregistre le resultat
 dans l'image (gR,gI)*/
@@ -73,7 +74,7 @@ void clean(float** matRf,int length,int width){
 
 /*fonction utilisee dans le calcule de L'ISNR
   calcule les sommes des differences carrees des 
-  matrices passées en parametres*/
+  matrices passÃ©es en parametres*/
 
 float sum_diff(float** mat1, float** mat2, int length, int width) {
 
@@ -87,12 +88,12 @@ float sum_diff(float** mat1, float** mat2, int length, int width) {
 
     return sum;
 }
-/* restaure l'image  (gR,gI) a laquelle on a appliqué le filtre h (filterR, filterI)
-   le resultat est stocké dans (matRf, matIf)
+/* restaure l'image  (gR,gI) a laquelle on a appliquÃ© le filtre h (filterR, filterI)
+   le resultat est stockÃ© dans (matRf, matIf)
     imageR est passee en parametre pour calculer l'ISNR.
     */
 void  restaurer(float** matRf, float**matIf, float** gR, float** gI,float** imageR,float** filterR, float**filterI, int pas, int nb_iterations,int length,int width ){
-    float numerateur = 0.0, ISNR = 0.0;
+  float numerateur = 0.0,ISNR;
     /* result convolution h*f */
   float** CI = fmatrix_allocate_2d(length,width);         
   float** CR = fmatrix_allocate_2d(length,width);
@@ -107,21 +108,7 @@ void  restaurer(float** matRf, float**matIf, float** gR, float** gI,float** imag
 
 
   int iteration=0;
-    /*initialisaton matrice*/
-  for (int i = 0; i < length; i++){ 
-    for (int j = 0; j < width; j++){ 
-      matRf[i][j]=gR[i][j];  //f0=g
-
-      CI[i][j]=0.0;
-      CR[i][j]=0.0;
-
-      parentheseI[i][j]=0.0;
-      parentheseR[i][j]=0.0;
-
-      allR[i][j]=0.0;
-      allI[i][j]=0.0;
-        }
-      }
+ 
   numerateur = sum_diff(imageR, gR, length, width);
 
   while(iteration < nb_iterations){
@@ -151,17 +138,22 @@ void  restaurer(float** matRf, float**matIf, float** gR, float** gI,float** imag
     add(matRf,allR,matRf,length,width);
     clean(matRf,length,width);
     ISNR = 10 * log10(numerateur / sum_diff(imageR, matRf, length, width));
+
+
     printf("%i%s%f\n",iteration," - ISNR ",ISNR);
     iteration++;  
   }
-  free_fmatrix_2d(allR);
-  free_fmatrix_2d(allI);
+ 
 
-  free_fmatrix_2d(CR);
-  free_fmatrix_2d(CI);
+}
+void denoise(float** haar,int nbLevels,float var,int length, int width){
 
-  free_fmatrix_2d(parentheseR);
-  free_fmatrix_2d(parentheseI);
+    for(int i = 0 ; i < length ; i++ )
+      for(int  j=0 ; j < width ; j++ ) {
+          if( (haar[i][j] != 0)  && ( i > length / powf(2, nbLevels) || j > length / powf(2, nbLevels)))
+            haar[i][j] = MAX(0, SQUARE(haar[i][j]) - 3 * var) / haar[i][j];
+      
+        }
 
 }
 
@@ -172,28 +164,31 @@ int main(int argc,char** argv)
   int nb_iterations;
   int length,width;
   int pas=1;
-  float var, isnr;
+  float var, ISNR;
   int size_filter; /* taille du filtre servant a ajouter du flou a l'image d'entree */
+  int nbLevels=3;
 
   printf("Entrez la taille du filtre passe bas : ");
   scanf("%d",&size_filter); 
 
   printf("Entrez la variance du bruit : ");
   scanf("%f",&var);
- 
-  printf("Entrez le nombre d'itérations (LANDWEBER): ");
+  
+  printf("Entrez le nombre d'itÃ©rations (LANDWEBER): ");
   scanf("%d",&nb_iterations);
-
+  int ok = 0;
 
   /* ouvrir l'image d'entree */ 
+  float** photograph = LoadImagePgm(NAME_IMG_IN, &length, &width);        /*photographe reelle*/
+
   float** imageR = LoadImagePgm(NAME_IMG_IN, &length, &width);        /*photographe reelle*/
   float** imageI = fmatrix_allocate_2d(length,width);        /*photographe imaginaire*/
 
   float** filterR = fmatrix_allocate_2d(length,width);       /*filtre passe-bas reel*/
   float** filterI = fmatrix_allocate_2d(length,width);       /*filtre passe-bas imaginaire*/
 
-  float** gR = fmatrix_allocate_2d(length,width);           /*photographe * filtre  (floué) reel*/
-  float** gI = fmatrix_allocate_2d(length,width);           /*photographe * filtre  (floué) imaginaire*/
+  float** gR = fmatrix_allocate_2d(length,width);           /*photographe * filtre  (flouÃ©) reel*/
+  float** gI = fmatrix_allocate_2d(length,width);           /*photographe * filtre  (flouÃ©) imaginaire*/
 
   float** matRf = fmatrix_allocate_2d(length,width);        /*Matrice Reelle resultat des iterations LANDWEBER*/
   float** matIf = fmatrix_allocate_2d(length,width);       /*Matrice Imaginaire resultat des iterations LANDWEBER*/          
@@ -201,7 +196,16 @@ int main(int argc,char** argv)
   float** matNR = fmatrix_allocate_2d(length,width);        /*Matrice flou+bruit Reelle restauree*/
   float** matNI = fmatrix_allocate_2d(length,width);        /*Matrice flou+bruit Imaginaire restauree*/ 
 
+  float** haar = fmatrix_allocate_2d(length,width);
 
+  float** m_nulle= fmatrix_allocate_2d(length,width);
+  for(int i = 0 ; i < length ; i++ )
+      for(int  j=0 ; j < width ; j++ ) {
+        m_nulle[i][j] = 0.0;
+      }
+
+  /*sauvegarder l'image originale*/
+  SaveImagePgm(NAME_IMG_OUT1,imageR,length,width);
 
 
   /* ajouter du flou et du bruit a l'image d'entree (add_gaussian_noise) */
@@ -215,16 +219,49 @@ int main(int argc,char** argv)
 
 
   /* 1er etape : deconvolution avec 'nb_iterations' de LANDWEBER */
+  /*dÃ©convolution de type landweber*/
   restaurer(matRf, matIf, gR,  gI, imageR, filterR, filterI, pas, nb_iterations, length, width );
   
 
 
   /* 2e etape : Filtrage dans le domaine des ondelettes */
 
+  /*algo figueiredo et novak 6 iteration*/
+    printf("%s\n","Figueiredo & Novak 6 iterations ");
 
+   while(ok < 6) {
+
+    
+
+  printf("%s%i%s","Figueiredo & Novak ",ok," ");
+  restaurer(matRf, matIf, gR,  gI, imageR, filterR, filterI, pas, 1, length, width );
+  /*transformee de Haar de matRf dans haar*/
+
+
+  haar2D_complete(matRf, haar, nbLevels, length, width);
+      
+
+  denoise(haar, nbLevels,var,length, width);
+  
+
+  // Haar inverse de haar dans tmp1
+  ihaar2D_complete(haar,matRf,nbLevels, length,width);
+
+
+
+  ok++;
+
+  }
+
+  ISNR = 10 * log10(sum_diff(photograph, gR, length, width) / sum_diff(photograph, matRf, length, width));
+
+    printf("fin-ISNR : %f\n", ISNR);
   /* Sauvegarde des matrices sous forme d'image pgm */  
 
- 
+  clean(matRf,length,width);
+
+  SaveImagePgm(NAME_IMG_OUT3, matRf, length, width);
+
   
   
 

@@ -41,6 +41,11 @@ float sum_diff(float** mat1, float** mat2, int length, int width) {
 
     return sum;
 }
+/*la restauration suivant cette methode de descente de gradient
+  genere des valeurs inferieures a 0 et superieures a 255
+  qui affecte le resultat lors de l'enregistrement de l'image dans 
+  le format pgm , cette fonction met les valeur >255 a 255
+  et a 0 les valeurs <0 du param: matRf   */
 
 void clean(float** matRf,int length,int width){
   for (int i = 0 ; i < length ; i++){      
@@ -52,7 +57,8 @@ void clean(float** matRf,int length,int width){
       }
     }
   }
-
+/*fonction de debruitage par seuillage des coefficients d'ondelette*/
+/*haar: matrice a seuiller*/
 void denoise(float** haar,int nbLevels,float threshold, int length, int width){
 
     for(int i = 0 ; i < length ; i++ )
@@ -70,7 +76,7 @@ void denoise(float** haar,int nbLevels,float threshold, int length, int width){
 
 
 int main(int argc,char** argv){
-    int i,j,k,l;
+ 
     int length,width;
     int nbLevels;
     
